@@ -3,9 +3,13 @@ package com.umg.notass.ui;
 import com.umg.notass.model.Estudiante;
 import com.umg.notass.model.Curso;
 import com.umg.notass.model.Grado;
+import com.umg.notass.model.Asignacion;
+import com.umg.notass.model.Catedratico;
 import com.umg.notass.service.EstudianteService;
 import com.umg.notass.service.CursoService;
 import com.umg.notass.service.GradoService;
+import com.umg.notass.service.AsignacionService;
+import com.umg.notass.service.CatedraticoService;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -35,6 +39,22 @@ public class MainFrame extends JFrame {
     private JButton btnGradoListar, btnGradoGuardar, btnGradoActualizar, btnGradoEliminar;
     private int selectedGradoId = -1;
 
+    // Componentes para Asignacion
+    private JTable asignacionTable;
+    private DefaultTableModel asignacionTableModel;
+    private JTextField txtAsignacionId, txtAsignacionEstudianteId, txtAsignacionCursoId, txtAsignacionFecha;
+    private JCheckBox chkAsignacionEstado;
+    private JButton btnAsignacionListar, btnAsignacionGuardar, btnAsignacionActualizar, btnAsignacionEliminar;
+    private int selectedAsignacionId = -1;
+
+    // Componentes para Catedratico
+    private JTable catedraticoTable;
+    private DefaultTableModel catedraticoTableModel;
+    private JTextField txtCatedraticoId, txtCatedraticoNombre, txtCatedraticoEmail, txtCatedraticoEspecialidad, txtCatedraticoTelefono, txtCatedraticoTituloAcademico, txtCatedraticoFechaContratacion;
+    private JComboBox<String> comboCatedraticoEstado;
+    private JButton btnCatedraticoListar, btnCatedraticoGuardar, btnCatedraticoActualizar, btnCatedraticoEliminar;
+    private int selectedCatedraticoId = -1;
+
     public MainFrame() {
         setTitle("Sistema de Notas");
         setSize(1000, 700);
@@ -54,6 +74,14 @@ public class MainFrame extends JFrame {
         // Pestaña de Grados
         JPanel gradoPanel = createGradoPanel();
         tabbedPane.addTab("Grados", gradoPanel);
+
+        // Pestaña de Asignaciones
+        JPanel asignacionPanel = createAsignacionPanel();
+        tabbedPane.addTab("Asignaciones", asignacionPanel);
+
+        // Pestaña de Catedráticos
+        JPanel catedraticoPanel = createCatedraticoPanel();
+        tabbedPane.addTab("Catedráticos", catedraticoPanel);
 
         setLayout(new BorderLayout());
         add(tabbedPane, BorderLayout.CENTER);
@@ -264,6 +292,161 @@ public class MainFrame extends JFrame {
         return panel;
     }
 
+    private JPanel createAsignacionPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        // Tabla
+        asignacionTableModel = new DefaultTableModel(
+                new Object[]{"ID", "Estudiante ID", "Curso ID", "Fecha Asignación", "Estado"}, 0
+        );
+        asignacionTable = new JTable(asignacionTableModel);
+        JScrollPane scrollPane = new JScrollPane(asignacionTable);
+
+        asignacionTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
+            int row = asignacionTable.getSelectedRow();
+            if (row >= 0) {
+                selectedAsignacionId = (int) asignacionTableModel.getValueAt(row, 0);
+                txtAsignacionId.setText(String.valueOf(selectedAsignacionId));
+                txtAsignacionEstudianteId.setText(String.valueOf(asignacionTableModel.getValueAt(row, 1)));
+                txtAsignacionCursoId.setText(String.valueOf(asignacionTableModel.getValueAt(row, 2)));
+                txtAsignacionFecha.setText((String) asignacionTableModel.getValueAt(row, 3));
+                chkAsignacionEstado.setSelected((Boolean) asignacionTableModel.getValueAt(row, 4));
+            }
+        });
+
+        // Formulario
+        JPanel formPanel = new JPanel(new GridLayout(5, 2, 10, 10));
+        formPanel.setBorder(BorderFactory.createTitledBorder("Datos de la Asignación"));
+
+        formPanel.add(new JLabel("ID:"));
+        txtAsignacionId = new JTextField();
+        txtAsignacionId.setEditable(false);
+        formPanel.add(txtAsignacionId);
+
+        formPanel.add(new JLabel("Estudiante ID:"));
+        txtAsignacionEstudianteId = new JTextField();
+        formPanel.add(txtAsignacionEstudianteId);
+
+        formPanel.add(new JLabel("Curso ID:"));
+        txtAsignacionCursoId = new JTextField();
+        formPanel.add(txtAsignacionCursoId);
+
+        formPanel.add(new JLabel("Fecha Asignación (YYYY-MM-DD HH:mm:ss):"));
+        txtAsignacionFecha = new JTextField();
+        formPanel.add(txtAsignacionFecha);
+
+        formPanel.add(new JLabel("Estado:"));
+        chkAsignacionEstado = new JCheckBox("Activo");
+        formPanel.add(chkAsignacionEstado);
+
+        // Botones
+        JPanel buttonPanel = new JPanel();
+        btnAsignacionListar = new JButton("Consultar");
+        btnAsignacionGuardar = new JButton("Guardar");
+        btnAsignacionActualizar = new JButton("Actualizar");
+        btnAsignacionEliminar = new JButton("Eliminar");
+
+        buttonPanel.add(btnAsignacionListar);
+        buttonPanel.add(btnAsignacionGuardar);
+        buttonPanel.add(btnAsignacionActualizar);
+        buttonPanel.add(btnAsignacionEliminar);
+
+        btnAsignacionListar.addActionListener(e -> listarAsignaciones());
+        btnAsignacionGuardar.addActionListener(e -> guardarAsignacion());
+        btnAsignacionActualizar.addActionListener(e -> actualizarAsignacion());
+        btnAsignacionEliminar.addActionListener(e -> eliminarAsignacion());
+
+        panel.add(formPanel, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+        return panel;
+    }
+
+    private JPanel createCatedraticoPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        // Tabla
+        catedraticoTableModel = new DefaultTableModel(
+                new Object[]{"ID", "Nombre", "Email", "Especialidad", "Teléfono", "Título Académico", "Fecha Contratación", "Estado"}, 0
+        );
+        catedraticoTable = new JTable(catedraticoTableModel);
+        JScrollPane scrollPane = new JScrollPane(catedraticoTable);
+
+        catedraticoTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
+            int row = catedraticoTable.getSelectedRow();
+            if (row >= 0) {
+                selectedCatedraticoId = (int) catedraticoTableModel.getValueAt(row, 0);
+                txtCatedraticoId.setText(String.valueOf(selectedCatedraticoId));
+                txtCatedraticoNombre.setText((String) catedraticoTableModel.getValueAt(row, 1));
+                txtCatedraticoEmail.setText((String) catedraticoTableModel.getValueAt(row, 2));
+                txtCatedraticoEspecialidad.setText((String) catedraticoTableModel.getValueAt(row, 3));
+                txtCatedraticoTelefono.setText((String) catedraticoTableModel.getValueAt(row, 4));
+                txtCatedraticoTituloAcademico.setText((String) catedraticoTableModel.getValueAt(row, 5));
+                txtCatedraticoFechaContratacion.setText((String) catedraticoTableModel.getValueAt(row, 6));
+                comboCatedraticoEstado.setSelectedItem((String) catedraticoTableModel.getValueAt(row, 7));
+            }
+        });
+
+        // Formulario
+        JPanel formPanel = new JPanel(new GridLayout(8, 2, 10, 10));
+        formPanel.setBorder(BorderFactory.createTitledBorder("Datos del Catedrático"));
+
+        formPanel.add(new JLabel("ID:"));
+        txtCatedraticoId = new JTextField();
+        txtCatedraticoId.setEditable(false);
+        formPanel.add(txtCatedraticoId);
+
+        formPanel.add(new JLabel("Nombre:"));
+        txtCatedraticoNombre = new JTextField();
+        formPanel.add(txtCatedraticoNombre);
+
+        formPanel.add(new JLabel("Email:"));
+        txtCatedraticoEmail = new JTextField();
+        formPanel.add(txtCatedraticoEmail);
+
+        formPanel.add(new JLabel("Especialidad:"));
+        txtCatedraticoEspecialidad = new JTextField();
+        formPanel.add(txtCatedraticoEspecialidad);
+
+        formPanel.add(new JLabel("Teléfono:"));
+        txtCatedraticoTelefono = new JTextField();
+        formPanel.add(txtCatedraticoTelefono);
+
+        formPanel.add(new JLabel("Título Académico:"));
+        txtCatedraticoTituloAcademico = new JTextField();
+        formPanel.add(txtCatedraticoTituloAcademico);
+
+        formPanel.add(new JLabel("Fecha Contratación (YYYY-MM-DD):"));
+        txtCatedraticoFechaContratacion = new JTextField();
+        formPanel.add(txtCatedraticoFechaContratacion);
+
+        formPanel.add(new JLabel("Estado:"));
+        comboCatedraticoEstado = new JComboBox<>(new String[]{"contratado", "jubilado", "suspendido"});
+        formPanel.add(comboCatedraticoEstado);
+
+        // Botones
+        JPanel buttonPanel = new JPanel();
+        btnCatedraticoListar = new JButton("Consultar");
+        btnCatedraticoGuardar = new JButton("Guardar");
+        btnCatedraticoActualizar = new JButton("Actualizar");
+        btnCatedraticoEliminar = new JButton("Eliminar");
+
+        buttonPanel.add(btnCatedraticoListar);
+        buttonPanel.add(btnCatedraticoGuardar);
+        buttonPanel.add(btnCatedraticoActualizar);
+        buttonPanel.add(btnCatedraticoEliminar);
+
+        btnCatedraticoListar.addActionListener(e -> listarCatedraticos());
+        btnCatedraticoGuardar.addActionListener(e -> guardarCatedratico());
+        btnCatedraticoActualizar.addActionListener(e -> actualizarCatedratico());
+        btnCatedraticoEliminar.addActionListener(e -> eliminarCatedratico());
+
+        panel.add(formPanel, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+        return panel;
+    }
+
     // Métodos para Estudiante
     private void listarEstudiantes() {
         try {
@@ -466,6 +649,151 @@ public class MainFrame extends JFrame {
             JOptionPane.showMessageDialog(this, "Grado eliminado");
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error al eliminar grado: " + ex.getMessage());
+        }
+    }
+
+    // Métodos para Asignacion
+    private void listarAsignaciones() {
+        try {
+            AsignacionService service = new AsignacionService();
+            java.util.List<Asignacion> asignaciones = service.getAsignaciones();
+            asignacionTableModel.setRowCount(0);
+            for (Asignacion a : asignaciones) {
+                asignacionTableModel.addRow(new Object[]{
+                        a.getId(), a.getEstudianteId(), a.getCursoId(), a.getFechaAsignacion(), a.isEstado()
+                });
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al listar asignaciones: " + ex.getMessage());
+        }
+    }
+
+    private void guardarAsignacion() {
+        try {
+            Asignacion a = new Asignacion();
+            a.setEstudianteId(Integer.parseInt(txtAsignacionEstudianteId.getText()));
+            a.setCursoId(Integer.parseInt(txtAsignacionCursoId.getText()));
+            a.setFechaAsignacion(txtAsignacionFecha.getText());
+            a.setEstado(chkAsignacionEstado.isSelected());
+
+            AsignacionService service = new AsignacionService();
+            service.createAsignacion(a);
+            listarAsignaciones();
+            JOptionPane.showMessageDialog(this, "Asignación guardada correctamente");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al guardar asignación: " + ex.getMessage());
+        }
+    }
+
+    private void actualizarAsignacion() {
+        if (selectedAsignacionId == -1) {
+            JOptionPane.showMessageDialog(this, "Seleccione una asignación para actualizar");
+            return;
+        }
+        try {
+            Asignacion a = new Asignacion();
+            a.setEstudianteId(Integer.parseInt(txtAsignacionEstudianteId.getText()));
+            a.setCursoId(Integer.parseInt(txtAsignacionCursoId.getText()));
+            a.setFechaAsignacion(txtAsignacionFecha.getText());
+            a.setEstado(chkAsignacionEstado.isSelected());
+
+            AsignacionService service = new AsignacionService();
+            service.updateAsignacion(selectedAsignacionId, a);
+            listarAsignaciones();
+            JOptionPane.showMessageDialog(this, "Asignación actualizada");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al actualizar asignación: " + ex.getMessage());
+        }
+    }
+
+    private void eliminarAsignacion() {
+        if (selectedAsignacionId == -1) {
+            JOptionPane.showMessageDialog(this, "Seleccione una asignación para eliminar");
+            return;
+        }
+        try {
+            AsignacionService service = new AsignacionService();
+            service.deleteAsignacion(selectedAsignacionId);
+            listarAsignaciones();
+            JOptionPane.showMessageDialog(this, "Asignación eliminada");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al eliminar asignación: " + ex.getMessage());
+        }
+    }
+
+    // Métodos para Catedratico
+    private void listarCatedraticos() {
+        try {
+            CatedraticoService service = new CatedraticoService();
+            java.util.List<Catedratico> catedraticos = service.getCatedraticos();
+            catedraticoTableModel.setRowCount(0);
+            for (Catedratico c : catedraticos) {
+                catedraticoTableModel.addRow(new Object[]{
+                        c.getId(), c.getNombre(), c.getEmail(), c.getEspecialidad(), c.getTelefono(),
+                        c.getTituloAcademico(), c.getFechaContratacion(), c.getEstado()
+                });
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al listar catedráticos: " + ex.getMessage());
+        }
+    }
+
+    private void guardarCatedratico() {
+        try {
+            Catedratico c = new Catedratico();
+            c.setNombre(txtCatedraticoNombre.getText());
+            c.setEmail(txtCatedraticoEmail.getText());
+            c.setEspecialidad(txtCatedraticoEspecialidad.getText());
+            c.setTelefono(txtCatedraticoTelefono.getText());
+            c.setTituloAcademico(txtCatedraticoTituloAcademico.getText());
+            c.setFechaContratacion(txtCatedraticoFechaContratacion.getText());
+            c.setEstado((String) comboCatedraticoEstado.getSelectedItem());
+
+            CatedraticoService service = new CatedraticoService();
+            service.createCatedratico(c);
+            listarCatedraticos();
+            JOptionPane.showMessageDialog(this, "Catedrático guardado correctamente");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al guardar catedrático: " + ex.getMessage());
+        }
+    }
+
+    private void actualizarCatedratico() {
+        if (selectedCatedraticoId == -1) {
+            JOptionPane.showMessageDialog(this, "Seleccione un catedrático para actualizar");
+            return;
+        }
+        try {
+            Catedratico c = new Catedratico();
+            c.setNombre(txtCatedraticoNombre.getText());
+            c.setEmail(txtCatedraticoEmail.getText());
+            c.setEspecialidad(txtCatedraticoEspecialidad.getText());
+            c.setTelefono(txtCatedraticoTelefono.getText());
+            c.setTituloAcademico(txtCatedraticoTituloAcademico.getText());
+            c.setFechaContratacion(txtCatedraticoFechaContratacion.getText());
+            c.setEstado((String) comboCatedraticoEstado.getSelectedItem());
+
+            CatedraticoService service = new CatedraticoService();
+            service.updateCatedratico(selectedCatedraticoId, c);
+            listarCatedraticos();
+            JOptionPane.showMessageDialog(this, "Catedrático actualizado");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al actualizar catedrático: " + ex.getMessage());
+        }
+    }
+
+    private void eliminarCatedratico() {
+        if (selectedCatedraticoId == -1) {
+            JOptionPane.showMessageDialog(this, "Seleccione un catedrático para eliminar");
+            return;
+        }
+        try {
+            CatedraticoService service = new CatedraticoService();
+            service.deleteCatedratico(selectedCatedraticoId);
+            listarCatedraticos();
+            JOptionPane.showMessageDialog(this, "Catedrático eliminado");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al eliminar catedrático: " + ex.getMessage());
         }
     }
 

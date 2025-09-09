@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class UsuarioService {
-    private static final String BASE_URL = "http://localhost:8081/api/usuarios";
+    private static final String BASE_URL = "https://sistema-notas-1-0.onrender.com/api/usuarios";
     private static final ObjectMapper mapper = new ObjectMapper();
 
     public Usuario login(String username, String password) throws Exception {
